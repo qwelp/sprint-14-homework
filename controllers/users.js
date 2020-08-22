@@ -34,19 +34,30 @@ module.exports.createUser = (req, res) => {
     email: emailPost,
     password
   } = req.body;
+  const passwordArray = password.split('').every((sym) => sym === ' ');
 
-  bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      name: namePost,
-      about: aboutPost,
-      avatar: avatarPost,
-      email: emailPost,
-      password: hash
-    }))
-    .then((user) => {
-      res.status(201).send({ _id: user._id });
-    })
-    .catch((err) => res.status(400).send(err));
+  if (password === ' ' || passwordArray || password.length < 9) {
+    res.status(400).send({ message: 'Пароль не может быть пустым и быть меньше 8 символов!' });
+  } else {
+    bcrypt.hash(password, 10)
+      .then((hash) => User.create({
+        name: namePost,
+        about: aboutPost,
+        avatar: avatarPost,
+        email: emailPost,
+        password: hash
+      }))
+      .then((user) => {
+        res.status(201).send({ _id: user._id });
+      })
+      .catch((err) => {
+        if (err.name === 'MongoError' && err.code === 11000) {
+          res.status(409).send({ message: err.message });
+        } else {
+          res.status(400).send({ message: err.message });
+        }
+      });
+  }
 };
 
 module.exports.login = (req, res) => {

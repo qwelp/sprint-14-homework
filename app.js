@@ -1,3 +1,4 @@
+const rateLimit = require('express-rate-limit');
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
@@ -14,6 +15,11 @@ const { PORT = 3000 } = process.env;
 
 const app = express();
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+
 const auth = require('./middlewares/auth');
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
@@ -22,6 +28,7 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useFindAndModify: false
 });
 
+app.use(limiter);
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
